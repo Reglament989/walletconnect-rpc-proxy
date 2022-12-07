@@ -1,8 +1,10 @@
+mod bsc;
 mod infura;
 mod pokt;
 
 use crate::{error::RpcResult, handlers::RpcQueryParams};
 use async_trait::async_trait;
+pub use bsc::BscProvider;
 use hyper::Body;
 use hyper::Response;
 pub use infura::InfuraProvider;

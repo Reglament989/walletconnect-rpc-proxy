@@ -6,10 +6,12 @@ use crate::error;
 use crate::project::storage::Config as StorageConfig;
 use crate::project::Config as RegistryConfig;
 
+mod bsc;
 mod infura;
 mod pokt;
 mod server;
 
+pub use bsc::*;
 pub use infura::*;
 pub use pokt::*;
 pub use server::*;
@@ -18,6 +20,7 @@ pub use server::*;
 pub struct Config {
     pub server: ServerConfig,
     pub infura: InfuraConfig,
+    pub bsc: BscConfig,
     pub pokt: PoktConfig,
     pub registry: RegistryConfig,
     pub storage: StorageConfig,
@@ -28,6 +31,7 @@ impl Config {
     pub fn from_env() -> error::RpcResult<Config> {
         Ok(Self {
             server: from_env("RPC_PROXY_")?,
+            bsc: from_env("RPC_PROXY_BSC_")?,
             infura: from_env("RPC_PROXY_INFURA_")?,
             pokt: from_env("RPC_PROXY_POKT_")?,
             registry: from_env("RPC_PROXY_REGISTRY_")?,

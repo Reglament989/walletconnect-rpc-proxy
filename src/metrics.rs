@@ -70,7 +70,8 @@ impl Metrics {
         )
     }
 
-    pub fn add_rejected_project(&self) {
-        self.rejected_project_counter.add(1, &[])
-    }
+    // Not needed now as project_id static hardcode
+    // pub fn add_rejected_project(&self) {
+    //     self.rejected_project_counter.add(1, &[])
+    // }
 }

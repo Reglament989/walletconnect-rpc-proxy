@@ -1,3 +1,4 @@
+use dotenv_codegen::dotenv;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
@@ -26,18 +27,22 @@ pub async fn handler(
         ));
     }
 
-    match state.registry.project_data(&query_params.project_id).await {
-        Ok(project) => {
-            if let Err(access_err) = project.validate_access(&query_params.project_id, None) {
-                state.metrics.add_rejected_project();
-                return Ok(handshake_error("projectId", format!("{:?}", access_err)));
-            }
-        }
+    // Project auth not need now but with time can be implemented, now just env
+    // match state.registry.project_data(&query_params.project_id).await {
+    //     Ok(project) => {
+    //         if let Err(access_err) = project.validate_access(&query_params.project_id, None) {
+    //             state.metrics.add_rejected_project();
+    //             return Ok(handshake_error("projectId", format!("{:?}", access_err)));
+    //         }
+    //     }
 
-        Err(err) => {
-            state.metrics.add_rejected_project();
-            return Ok(handshake_error("projectId", format!("{:?}", err)));
-        }
+    //     Err(err) => {
+    //         state.metrics.add_rejected_project();
+    //         return Ok(handshake_error("projectId", format!("{:?}", err)));
+    //     }
+    // }
+    if query_params.project_id != dotenv!("PROJECT_ID") {
+        return Ok(handshake_error("projectId", "Closed beta at now"));
     }
 
     let chain_id = query_params.chain_id.to_lowercase();

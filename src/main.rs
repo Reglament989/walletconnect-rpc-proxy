@@ -15,7 +15,7 @@ use crate::env::Config;
 use crate::metrics::Metrics;
 use crate::project::Registry;
 use crate::providers::ProviderRepository;
-use crate::providers::{InfuraProvider, PoktProvider};
+use crate::providers::{BscProvider, InfuraProvider, PoktProvider};
 use crate::state::State;
 
 mod analytics;
@@ -141,6 +141,7 @@ fn init_providers(config: &Config) -> ProviderRepository {
     let infura_supported_chains = config.infura.supported_chains.clone();
     let pokt_project_id = config.pokt.project_id.clone();
     let pokt_supported_chains = config.pokt.supported_chains.clone();
+    let bsc_supported_chains = config.pokt.supported_chains.clone();
 
     let mut providers = ProviderRepository::default();
     let forward_proxy_client = Client::builder().build::<_, hyper::Body>(HttpsConnector::new());
@@ -153,11 +154,17 @@ fn init_providers(config: &Config) -> ProviderRepository {
     providers.add_provider("infura".into(), Arc::new(infura_provider));
 
     let pokt_provider = PoktProvider {
-        client: forward_proxy_client,
+        client: forward_proxy_client.clone(),
         project_id: pokt_project_id,
         supported_chains: pokt_supported_chains,
     };
     providers.add_provider("pokt".into(), Arc::new(pokt_provider));
+
+    let bsc_provider = BscProvider {
+        client: forward_proxy_client,
+        supported_chains: bsc_supported_chains,
+    };
+    providers.add_provider("bsc".into(), Arc::new(bsc_provider));
 
     providers
 }
