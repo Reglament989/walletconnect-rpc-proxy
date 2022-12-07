@@ -31,7 +31,7 @@ impl Config {
     pub fn from_env() -> error::RpcResult<Config> {
         Ok(Self {
             server: from_env("RPC_PROXY_")?,
-            bsc: from_env("RPC_PROXY_BSC_")?,
+            bsc: BscConfig::default(),
             infura: from_env("RPC_PROXY_INFURA_")?,
             pokt: from_env("RPC_PROXY_POKT_")?,
             registry: from_env("RPC_PROXY_REGISTRY_")?,

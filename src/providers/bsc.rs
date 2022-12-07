@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use hyper::{client::HttpConnector, Body, Client, Response};
 use hyper_tls::HttpsConnector;
 use std::collections::HashMap;
+use tracing::info;
 
 #[derive(Clone)]
 pub struct BscProvider {
@@ -22,11 +23,12 @@ impl RpcProvider for BscProvider {
         _headers: hyper::http::HeaderMap,
         body: hyper::body::Bytes,
     ) -> RpcResult<Response<Body>> {
-        self.supported_chains
-            .get(&query_params.chain_id.to_lowercase())
-            .ok_or(RpcError::ChainNotFound)?;
-
-        let uri = "https://bsc-dataseed.binance.org/".to_owned();
+        let uri = match query_params.chain_id.to_lowercase().as_str() {
+            "eip155:56" => Some("https://bsc-dataseed.binance.org"),
+            "eip155:97" => Some("https://data-seed-prebsc-1-s1.binance.org:8545"),
+            _ => None,
+        }
+        .ok_or(RpcError::ChainNotFound)?;
 
         let hyper_request = hyper::http::Request::builder()
             .method(method)

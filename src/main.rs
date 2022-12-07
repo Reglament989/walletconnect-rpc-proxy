@@ -103,7 +103,7 @@ async fn main() -> error::RpcResult<()> {
         ])
         .allow_methods(vec!["GET", "POST"]);
 
-    let proxy = warp::any()
+    let proxy = warp::post()
         .and(warp::path!("v1"))
         .and(state_filter.clone())
         .and(warp::filters::addr::remote())
@@ -141,7 +141,7 @@ fn init_providers(config: &Config) -> ProviderRepository {
     let infura_supported_chains = config.infura.supported_chains.clone();
     let pokt_project_id = config.pokt.project_id.clone();
     let pokt_supported_chains = config.pokt.supported_chains.clone();
-    let bsc_supported_chains = config.pokt.supported_chains.clone();
+    let bsc_supported_chains = config.bsc.supported_chains.clone();
 
     let mut providers = ProviderRepository::default();
     let forward_proxy_client = Client::builder().build::<_, hyper::Body>(HttpsConnector::new());

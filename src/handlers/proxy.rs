@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::analytics::MessageInfo;
 use tap::TapFallible;
-use tracing::warn;
+use tracing::{info, warn};
 
 use crate::handlers::{handshake_error, RpcQueryParams};
 use crate::State;
@@ -20,12 +20,12 @@ pub async fn handler(
     headers: hyper::http::HeaderMap,
     body: hyper::body::Bytes,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    if query_params.project_id.is_empty() {
-        return Ok(field_validation_error(
-            "projectId",
-            "No project id provided",
-        ));
-    }
+    // if query_params.project_id.is_empty() {
+    //     return Ok(field_validation_error(
+    //         "projectId",
+    //         "No project id provided",
+    //     ));
+    // }
 
     // Project auth not need now but with time can be implemented, now just env
     // match state.registry.project_data(&query_params.project_id).await {
@@ -44,10 +44,8 @@ pub async fn handler(
     if query_params.project_id != dotenv!("PROJECT_ID") {
         return Ok(handshake_error("projectId", "Closed beta at now"));
     }
-
     let chain_id = query_params.chain_id.to_lowercase();
-    let provider = state.providers.get_provider_for_chain_id(&chain_id);
-    let provider = match provider {
+    let provider = match state.providers.get_provider_for_chain_id(&chain_id) {
         Some(provider) => provider,
         _ => {
             return Ok(field_validation_error(
@@ -57,27 +55,13 @@ pub async fn handler(
         }
     };
 
-    state.metrics.add_rpc_call(&chain_id);
-
-    if let Ok(rpc_request) = serde_json::from_slice(&body) {
-        let (country, continent) = sender
-            .and_then(|addr| state.analytics.lookup_geo_data(addr.ip()))
-            .map(|geo| (geo.country, geo.continent))
-            .unwrap_or((None, None));
-        state.analytics.message(MessageInfo::new(
-            &query_params,
-            &rpc_request,
-            sender,
-            country,
-            continent,
-        ))
-    }
-
     // TODO: map the response error codes properly
     // e.g. HTTP401 from target should map to HTTP500
     provider
         .proxy(method, path, query_params, headers, body)
         .await
-        .tap_err(|error| warn!(%error, "request failed"))
-        .map_err(|_| warp::reject::reject())
+        .map_err(|err| {
+            warn!("{}", err);
+            warp::reject::reject()
+        })
 }

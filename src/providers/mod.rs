@@ -26,6 +26,7 @@ impl ProviderRepository {
             .supported_caip_chainids()
             .into_iter()
             .for_each(|chain| {
+                dbg!(&chain);
                 self.map.insert(chain, provider.clone());
             });
     }
