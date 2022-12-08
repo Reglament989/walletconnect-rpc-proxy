@@ -43,35 +43,35 @@ impl Registry {
         let api_url = &cfg_registry.api_url;
         let api_auth_token = &cfg_registry.api_auth_token;
 
-        let (Some(api_url), Some(api_auth_token)) = (api_url, api_auth_token) else {
-            return Err(RpcError::InvalidConfiguration(
+        if let (Some(api_url), Some(api_auth_token)) = (api_url, api_auth_token) {
+            let client = RegistryHttpClient::new(api_url, api_auth_token)?;
+
+            let metrics = ProjectDataMetrics::new(meter);
+
+            let cache_addr = cfg_storage.project_data_redis_addr();
+            let cache = match cache_addr {
+                None => None,
+                Some(cache_addr) => {
+                    let cache = open_redis(&cache_addr, cfg_storage.redis_max_connections)?;
+
+                    Some(ProjectStorage::new(
+                        cache,
+                        cfg_registry.project_data_cache_ttl(),
+                        metrics.clone(),
+                    ))
+                }
+            };
+
+            Ok(Self {
+                client,
+                cache,
+                metrics,
+            })
+        } else {
+            Err(RpcError::InvalidConfiguration(
                 "missing registry api parameters".to_string(),
-            ));
-        };
-
-        let client = RegistryHttpClient::new(api_url, api_auth_token)?;
-
-        let metrics = ProjectDataMetrics::new(meter);
-
-        let cache_addr = cfg_storage.project_data_redis_addr();
-        let cache = match cache_addr {
-            None => None,
-            Some(cache_addr) => {
-                let cache = open_redis(&cache_addr, cfg_storage.redis_max_connections)?;
-
-                Some(ProjectStorage::new(
-                    cache,
-                    cfg_registry.project_data_cache_ttl(),
-                    metrics.clone(),
-                ))
-            }
-        };
-
-        Ok(Self {
-            client,
-            cache,
-            metrics,
-        })
+            ))
+        }
     }
 
     pub async fn project_data(&self, id: &str) -> RpcResult<ProjectData> {
